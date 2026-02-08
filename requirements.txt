@@ -1,0 +1,26 @@
+# FedForge Dependencies
+
+# Web server
+Flask>=3.0.0
+flask-cors>=4.0.0
+
+# JWT handling
+PyJWT>=2.8.0
+cryptography>=41.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# CLI interface
+click>=8.1.0
+rich>=13.0.0  # For pretty terminal output
+
+# Azure SDK (for future federated credential management)
+azure-identity>=1.15.0
+azure-mgmt-authorization>=4.0.0
+
+# Development
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
