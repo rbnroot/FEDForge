@@ -1,3 +1,9 @@
 *.pem
 *.pyc
 example.py
+*.jwt
+*.json
+*.md
+!README.md
+fedforce_venv/*
+tests/*

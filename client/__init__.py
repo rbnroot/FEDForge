@@ -3,7 +3,12 @@ FedForge Client Module
 Token forging and exchange operations
 """
 
-from .forge import TokenForge, create_github_actions_token
-from .exchange import TokenExchange
+from .forge import TokenForge
+from .exchange import TokenExchangeEntra, TokenExchangeGCP, TokenExchangeAWS
 
-__all__ = ['TokenForge', 'TokenExchange', 'create_github_actions_token']
+__all__ = [
+    'TokenForge', 
+    'TokenExchangeEntra',
+    'TokenExchangeGCP',
+    'TokenExchangeAWS'
+]

